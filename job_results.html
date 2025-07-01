@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JobOnTop.be AI Scraper Results</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 2em;
+        }
+        .stat-card p {
+            margin: 0;
+            opacity: 0.9;
+        }
+        .filters {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .filter-input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            flex: 1;
+            min-width: 200px;
+        }
+        .job-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+        }
+        .job-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        .job-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        .job-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 10px;
+        }
+        .job-info {
+            margin-bottom: 10px;
+        }
+        .label {
+            font-weight: bold;
+            color: #34495e;
+            display: inline-block;
+            width: 120px;
+        }
+        .value {
+            color: #2c3e50;
+        }
+        .missing {
+            color: #95a5a6;
+            font-style: italic;
+        }
+        .job-url {
+            word-break: break-all;
+            font-size: 0.9em;
+        }
+        .job-url a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .job-url a:hover {
+            text-decoration: underline;
+        }
+        .search-info {
+            text-align: center;
+            margin: 20px 0;
+            color: #7f8c8d;
+        }
+        .export-btn {
+            background: #27ae60;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            margin-bottom: 20px;
+        }
+        .export-btn:hover {
+            background: #2ecc71;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 JobOnTop.be AI Scraper Results</h1>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <h3 id="total-jobs">39</h3>
+                <p>Total Jobs</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="companies-found">38</h3>
+                <p>Companies Identified</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="locations-found">37</h3>
+                <p>Locations Found</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="emails-found">36</h3>
+                <p>Emails Extracted</p>
+            </div>
+        </div>
+
+        <div class="filters">
+            <input type="text" id="company-filter" class="filter-input" placeholder="🏢 Filter by company name...">
+            <input type="text" id="location-filter" class="filter-input" placeholder="📍 Filter by location...">
+            <input type="text" id="email-filter" class="filter-input" placeholder="📧 Filter by email...">
+        </div>
+
+        <button class="export-btn" onclick="exportToCSV()">📥 Export to CSV</button>
+
+        <div class="search-info">
+            <span id="results-count">Showing 39 jobs</span>
+        </div>
+
+        <div class="job-grid" id="job-grid">
+            <!-- Jobs will be loaded here by JavaScript -->
+        </div>
+    </div>
+
+    <script>
+        // Sample data - in a real application, this would come from your CSV or database
+        const jobsData = [
+            {
+                company_name: "Ciconia",
+                location: "Schoten",
+                contact_person: "",
+                email_addresses: "info@brasserie-ciconia.be",
+                phone_numbers: "",
+                address: "Horstebaan 12 2900 Schoten",
+                url: "https://www.jobontop.be/vacatures/vacature-flexi-medewerker-bar-zaal-4935944-13.html"
+            },
+            {
+                company_name: "Eetcafe de Bibliotheek",
+                location: "Wijnegem",
+                contact_person: "",
+                email_addresses: "lindsy.vl@live.be",
+                phone_numbers: "",
+                address: "Turnhoutsebaan 5 Wijnegem - Shop Eat Enjoy",
+                url: "https://www.jobontop.be/vacatures/vacature-dienster-kelner-zaalhulp-32-of-38-u-week-4935933-13.html"
+            },
+            {
+                company_name: "Eetcafé 't Klokske",
+                location: "Antwerpen",
+                contact_person: "",
+                email_addresses: "",
+                phone_numbers: "",
+                address: "Groenplaats 24 2000 Antwerpen",
+                url: "https://www.jobontop.be/vacatures/vacature-keukenhulp-vast-of-flexi-4935831-13.html"
+            },
+            {
+                company_name: "Botanic Sanctuary Antwerp",
+                location: "",
+                contact_person: "",
+                email_addresses: "jobs@botanicantwerp.com",
+                phone_numbers: "",
+                address: "",
+                url: "https://www.jobontop.be/vacatures/vacature-phone-operator-student-extra-flexi-4935745-13.html"
+            },
+            {
+                company_name: "La Tannerie",
+                location: "Durbuy",
+                contact_person: "Tom Van Cauwenberghe",
+                email_addresses: "tom@latanneriededurbuy.be",
+                phone_numbers: "0476415652",
+                address: "Rue Du Canal 12 Bomal-Sur-Ourthe",
+                url: "https://www.jobontop.be/vacatures/vacature-flexi-uitbater-b-b-4935743-13.html"
+            },
+            {
+                company_name: "Verso Café",
+                location: "Antwerpen",
+                contact_person: "",
+                email_addresses: "",
+                phone_numbers: "",
+                address: "Lange Gasthuisstraat 9 2000 Antwerpen",
+                url: "https://www.jobontop.be/vacatures/vacature-barmedewerker-verso-cafe-vast-–-flexi-–-student-4934414-13.html"
+            },
+            {
+                company_name: "Clash Lunch & Dine",
+                location: "Brussegem",
+                contact_person: "",
+                email_addresses: "info@restoclash.be",
+                phone_numbers: "0475/21.83.80",
+                address: "Nieuwelaan 128 1785 Brussegem",
+                url: "https://www.jobontop.be/vacatures/vacature-zaalmedewerker-m-v-vast-flexi-student-4935150-13.html"
+            },
+            {
+                company_name: "NOMAD",
+                location: "Antwerpen",
+                contact_person: "",
+                email_addresses: "jobs@omengroup.be",
+                phone_numbers: "",
+                address: "Jan Van Rijswijcklaan 155 2018 Antwerpen",
+                url: "https://www.jobontop.be/vacatures/vacature-poets-afwashulp-vast-of-flexi-4935060-13.html"
+            },
+            {
+                company_name: "Bistro VolDaan",
+                location: "Lier",
+                contact_person: "",
+                email_addresses: "info@bistrovoldaan.be",
+                phone_numbers: "0477/73.85.35",
+                address: "Kesselsesteenweg 150 - 2500 Lier",
+                url: "https://www.jobontop.be/vacatures/vacature-zaalmedewerker-verantwoordelijke-vast-flexi-student-4934451-13.html"
+            },
+            {
+                company_name: "Grand-Café Het District",
+                location: "Ekeren",
+                contact_person: "Maes Gunther",
+                email_addresses: "1969guan@gmail.com",
+                phone_numbers: "0474/91.24.23",
+                address: "Veltwijcklaan 48 2180 Ekeren",
+                url: "https://www.jobontop.be/vacatures/vacature-flexi-zaalmedewerker-4934358-13.html"
+            }
+        ];
+
+        let filteredJobs = [...jobsData];
+
+        function renderJobs(jobs) {
+            const jobGrid = document.getElementById('job-grid');
+            jobGrid.innerHTML = '';
+
+            jobs.forEach(job => {
+                const jobCard = document.createElement('div');
+                jobCard.className = 'job-card';
+                
+                jobCard.innerHTML = `
+                    <div class="job-title">${job.company_name || 'Unknown Company'}</div>
+                    <div class="job-info">
+                        <span class="label">📍 Location:</span>
+                        <span class="value ${!job.location ? 'missing' : ''}">${job.location || 'Not specified'}</span>
+                    </div>
+                    <div class="job-info">
+                        <span class="label">👤 Contact:</span>
+                        <span class="value ${!job.contact_person ? 'missing' : ''}">${job.contact_person || 'Not specified'}</span>
+                    </div>
+                    <div class="job-info">
+                        <span class="label">📧 Email:</span>
+                        <span class="value ${!job.email_addresses ? 'missing' : ''}">${job.email_addresses || 'Not specified'}</span>
+                    </div>
+                    <div class="job-info">
+                        <span class="label">📞 Phone:</span>
+                        <span class="value ${!job.phone_numbers ? 'missing' : ''}">${job.phone_numbers || 'Not specified'}</span>
+                    </div>
+                    <div class="job-info">
+                        <span class="label">🏠 Address:</span>
+                        <span class="value ${!job.address ? 'missing' : ''}">${job.address || 'Not specified'}</span>
+                    </div>
+                    <div class="job-info job-url">
+                        <span class="label">🔗 Job URL:</span>
+                        <a href="${job.url}" target="_blank">${job.url}</a>
+                    </div>
+                `;
+                
+                jobGrid.appendChild(jobCard);
+            });
+
+            document.getElementById('results-count').textContent = `Showing ${jobs.length} of ${jobsData.length} jobs`;
+        }
+
+        function filterJobs() {
+            const companyFilter = document.getElementById('company-filter').value.toLowerCase();
+            const locationFilter = document.getElementById('location-filter').value.toLowerCase();
+            const emailFilter = document.getElementById('email-filter').value.toLowerCase();
+
+            filteredJobs = jobsData.filter(job => {
+                return (
+                    (job.company_name || '').toLowerCase().includes(companyFilter) &&
+                    (job.location || '').toLowerCase().includes(locationFilter) &&
+                    (job.email_addresses || '').toLowerCase().includes(emailFilter)
+                );
+            });
+
+            renderJobs(filteredJobs);
+        }
+
+        function exportToCSV() {
+            const headers = ['Company Name', 'Location', 'Contact Person', 'Email', 'Phone', 'Address', 'URL'];
+            const csvContent = [
+                headers.join(','),
+                ...filteredJobs.map(job => [
+                    `"${job.company_name || ''}"`,
+                    `"${job.location || ''}"`,
+                    `"${job.contact_person || ''}"`,
+                    `"${job.email_addresses || ''}"`,
+                    `"${job.phone_numbers || ''}"`,
+                    `"${job.address || ''}"`,
+                    `"${job.url}"`
+                ].join(','))
+            ].join('\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'jobontop_scraper_results.csv';
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        // Add event listeners
+        document.getElementById('company-filter').addEventListener('input', filterJobs);
+        document.getElementById('location-filter').addEventListener('input', filterJobs);
+        document.getElementById('email-filter').addEventListener('input', filterJobs);
+
+        // Initial render
+        renderJobs(jobsData);
+    </script>
+</body>
+</html>

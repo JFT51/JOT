@@ -1,0 +1,17 @@
+Can you create a webscraper that will first make a list of the html pages found in this html page:
+https://www.jobontop.be/jobs-dub.html
+extracting all the html links after each <h3 class="itemTitle actItemTitle">.
+
+Then scrape those links extracting 2 sections:
+
+For the section “Bedrijf”, the text found between the html sections:
+<h2 class="subHeader jbdSh jbdTextSh">Bedrijf</h2>
+And 
+<h2 class="subHeader jbdSh jbdTextSh">Taken</h2>
+
+For the section “Solliciteren”, the text found between the html sections:
+<h2 class="subHeader jbdSh jbdTextSh">Solliciteren</h2>
+And the next <h2 class="subHeader jbdSh jbdShReg">
+
+Once the scraping is finished, show this text data a table
+Important, when scraping ignore the file robot.txt
