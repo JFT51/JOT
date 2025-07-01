@@ -64,33 +64,45 @@ class JobDataExtractor:
         # Enhanced patterns for more precise company name extraction
         patterns = [
             # Pattern 1: Restaurant/Brasserie etc. + name (most specific first)
-            r'(?:Restaurant|Brasserie|Café|Bar|Hotel|Bistro|Eetcafé|Grand-Café)\s+([A-Za-z\'\s&\-\.]{1,30}?)(?:\s+is|\s+bevindt|\s+staat|\s+biedt|\s*,|\s+te\s|\s+in\s)',
+            r'(?:Restaurant|Brasserie|Café|Bar|Hotel|Bistro|Eetcafé|Grand-Café)\s+([A-Za-z\'\s\&\-\.]{1,30}?)(?:\s+(?:is|bevindt|staat|biedt|waar|die|dat|met)|\s*[,\.]|\s+te\s|\s+in\s)',
             
-            # Pattern 2: Company name at start followed by 'is'
-            r'^([A-Za-z][A-Za-z\'\s&\-\.]{1,25}?)\s+is\s+(?:een|dé|méér|gekend)',
+            # Pattern 2: Company name at start followed by 'is' with better delimiters
+            r'^([A-Za-z][A-Za-z\'\s\&\-\.]{1,25}?)\s+(?:is|bevindt\s+zich|staat|biedt)\s+(?:een|dé|méér|gekend|gespecialiseerd|bekend)',
             
-            # Pattern 3: 'Bij' + company name
-            r'Bij\s+([A-Za-z][A-Za-z\'\s&\-\.]{1,25}?)(?:\s+draait|\s+is|\s+staat|\s+hechten)',
+            # Pattern 3: 'Bij' + company name with better ending detection
+            r'Bij\s+(?:de\s+|het\s+)?([A-Za-z][A-Za-z\'\s\&\-\.]{1,25}?)(?:\s+(?:draait|is|staat|hechten|werk|ga|gaat)|\s*[,\.])',
             
             # Pattern 4: Company name + location pattern
-            r'^([A-Z][A-Za-z\'\s&\-\.]{1,25}?)(?:\s*,|\s+te\s+[A-Z]|\s+in\s+[A-Z]|\s+op\s+[A-Z])',
+            r'^([A-Z][A-Za-z\'\s\&\-\.]{1,25}?)(?:\s*[,\.]|\s+te\s+[A-Z]|\s+in\s+[A-Z]|\s+op\s+[A-Z]|\s+van\s+[A-Z])',
             
-            # Pattern 5: Word + comma (simple pattern)
-            r'^([A-Z][a-z]+(?:\s+[A-Z\'&][a-z]+){0,3})\s*,',
+            # Pattern 5: Word + comma or period (simple pattern)
+            r'^([A-Z][a-z]+(?:\s+[A-Z\'\'\&][a-z]+){0,3})\s*[,\.]',
             
-            # Pattern 6: Company names starting sentences
-            r'^([A-Z][a-z]+(?:[\s\'&-][A-Z][a-z]+){0,2})(?:\s+(?:is|staat|bevindt|biedt|heeft|maakt|zorgt|serveert))',
+            # Pattern 6: Company names starting sentences with action verbs
+            r'^([A-Z][a-z]+(?:[\s\'\'\&-][A-Z][a-z]+){0,2})(?:\s+(?:is|staat|bevindt|biedt|heeft|maakt|zorgt|serveert|zoekt|wil|kan))',
             
             # Pattern 7: Eten bij + name
-            r'Eten\s+bij\s+(?:de\s+)?([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)',
+            r'Eten\s+bij\s+(?:de\s+|het\s+)?([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)',
             
             # Pattern 8: Company + plaats (position/location)
-            r'^([A-Z][a-z]+(?:\s+[A-Z\'&][a-z]+){0,2})\s+plaats\s+',
+            r'^([A-Z][a-z]+(?:\s+[A-Z\'\'\&][a-z]+){0,2})\s+plaats\s+',
             
-            # Pattern 9: Simple capitalized words at start
-            r'^([A-Z][a-z]+(?:[\s\'&-][A-Z][a-z]+){0,2})(?=\s+(?:een|de|het|uw|onze|dit|deze))'
+            # Pattern 9: Simple capitalized words at start before articles
+            r'^([A-Z][a-z]+(?:[\s\'\'\&-][A-Z][a-z]+){0,2})(?=\s+(?:een|de|het|uw|onze|dit|deze|hun|haar))',
+            
+            # Pattern 10: Werken bij + company name
+            r'(?:Werken\s+bij|Werk\s+bij)\s+(?:de\s+|het\s+)?([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})',
+            
+            # Pattern 11: Company name followed by descriptive text
+            r'^([A-Z][a-z]+(?:\s+[A-Z][A-Za-z\'\&-]+){0,2})(?:\s+(?:waar|die|dat|welke|biedt|heeft|staat|is\s+een|zijn\s+een))',
+            
+            # Pattern 12: Quoted or emphasized company names
+            r'[\"\']([A-Z][A-Za-z\'\s\&\-\.]{2,25})[\"\']',
+            
+            # Pattern 13: Company name after "Welkom bij"
+            r'Welkom\s+bij\s+(?:de\s+|het\s+)?([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})'
         ]
-        
+
         for pattern in patterns:
             match = re.search(pattern, text)
             if match:
@@ -111,7 +123,7 @@ class JobDataExtractor:
                 # Stop at common stop words or lowercase words (except prepositions)
                 if word.lower() in ['is', 'bevindt', 'staat', 'biedt', 'voor', 'een', 'op', 'aan', 'met', 'van']:
                     break
-                if word[0].isupper() or word.lower() in ['de', 'het', "'t", 'van', '&']:
+                if word[0].isupper() or word.lower() in ['de', 'het', "'t", 'van', '\u0026']:
                     company_words.append(word)
                 else:
                     break
@@ -126,7 +138,7 @@ class JobDataExtractor:
                     return company_name
         
         return None
-    
+
     def _clean_company_name(self, name: str) -> str:
         """Clean up extracted company name"""
         if not name:
@@ -151,8 +163,8 @@ class JobDataExtractor:
         name = re.sub(r'teBrussegemstaat', ' te Brussegem staat', name)  # Fix text concatenation
         
         # Handle specific company name fixes
-        if 'Clash Lunch & DineteBrussegemstaat' in name:
-            name = 'Clash Lunch & Dine'
+        if 'Clash Lunch \u0026 DineteBrussegemstaat' in name:
+            name = 'Clash Lunch \u0026 Dine'
         if name == 'Eetcafe':
             name = 'Eetcafe de Bibliotheek'
         if name == 'Nestled':
