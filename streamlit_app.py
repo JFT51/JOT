@@ -188,28 +188,38 @@ def main():
     df_structured = load_data_safe(latest_structured)
     
     # Main tabs
-    if df_structured is not None:
-        tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    # Initialize tab variables to None
+    analytics_tab, structured_data_tab = None, None
+    raw_data_tab, job_details_tab, export_data_tab = None, None, None
+    tabs_created = False
+
+    if df_structured is not None and not df_structured.empty:
+        analytics_tab, structured_data_tab, raw_data_tab, job_details_tab, export_data_tab = st.tabs([
             "📊 Analytics", 
             "🏢 Structured Data", 
             "📋 Raw Data", 
             "🔍 Job Details", 
             "📥 Export"
         ])
-    else:
-        tab1, tab2, tab3 = st.tabs([
+        tabs_created = True
+    elif df_raw is not None and not df_raw.empty: # Only raw data available
+        raw_data_tab, job_details_tab, export_data_tab = st.tabs([
             "📋 Raw Data", 
             "🔍 Job Details", 
             "📥 Export"
         ])
-    
-    # Analytics Tab
-    if df_structured is not None:
-        with tab1:
+        tabs_created = True
+    else: # No data at all
+        st.error("No data loaded. Please run the scraper (python deploy.py) and refresh.")
+        return # Exit if no data, no tabs to display
+
+    # Analytics Tab - Only if it was created
+    if analytics_tab:
+        with analytics_tab:
             st.header("📊 Job Market Analytics")
             
             # Metrics
-            display_metrics(df_structured)
+            display_metrics(df_structured) # df_structured is guaranteed to be non-empty here
             
             # Charts
             col1, col2 = st.columns(2)
@@ -228,203 +238,202 @@ def main():
                 else:
                     st.info("No contact data available for visualization")
         
-        # Structured Data Tab
-        with tab2:
+    # Structured Data Tab - Only if it was created
+    if structured_data_tab:
+        with structured_data_tab:
             st.header("🏢 AI-Extracted Structured Data")
             
-            if df_structured is not None and not df_structured.empty:
-                # Filters
-                st.subheader("🔍 Filters")
-                col1, col2, col3 = st.columns(3)
-                
-                with col1:
-                    company_filter = st.text_input("🏢 Company Name")
-                    
-                with col2:
-                    location_options = ["All"] + sorted(df_structured['location'].dropna().unique().tolist())
-                    location_filter = st.selectbox("📍 Location", location_options)
-                
-                with col3:
-                    st.write("**Data Availability:**")
-                    has_email = st.checkbox("Has Email")
-                    has_phone = st.checkbox("Has Phone")
-                    has_contact = st.checkbox("Has Contact Person")
-                
-                # Apply filters
-                filtered_df = df_structured.copy()
-                
-                if company_filter:
-                    filtered_df = filtered_df[
-                        filtered_df['company_name'].str.contains(company_filter, case=False, na=False)
-                    ]
-                
-                if location_filter != "All":
-                    filtered_df = filtered_df[filtered_df['location'] == location_filter]
-                
-                if has_email:
-                    filtered_df = filtered_df[filtered_df['email_addresses'].str.len() > 0]
-                
-                if has_phone:
-                    filtered_df = filtered_df[filtered_df['phone_numbers'].str.len() > 0]
-                
-                if has_contact:
-                    filtered_df = filtered_df[filtered_df['contact_person'].notna()]
-                
-                # Display results
-                st.info(f"📋 Showing {len(filtered_df)} of {len(df_structured)} jobs")
-                
-                # Select columns to display
-                display_columns = ['company_name', 'location', 'contact_person', 'email_addresses', 'phone_numbers', 'address']
-                
-                if not filtered_df.empty:
-                    st.dataframe(
-                        filtered_df[display_columns],
-                        use_container_width=True,
-                        column_config={
-                            "company_name": st.column_config.TextColumn("Company", width="medium"),
-                            "location": st.column_config.TextColumn("Location", width="small"),
-                            "contact_person": st.column_config.TextColumn("Contact", width="medium"),
-                            "email_addresses": st.column_config.TextColumn("Email", width="medium"),
-                            "phone_numbers": st.column_config.TextColumn("Phone", width="small"),
-                            "address": st.column_config.TextColumn("Address", width="large"),
-                        }
-                    )
-                else:
-                    st.warning("No jobs match the selected filters")
-            else:
-                st.warning("No structured data available")
-    
-    # Raw Data Tab
-    raw_tab = tab3 if df_structured is not None else tab1
-    with raw_tab:
-        st.header("📋 Raw Scraped Data")
-        
-        if df_raw is not None and not df_raw.empty:
-            # Basic filters for raw data
-            st.subheader("🔍 Search")
-            col1, col2 = st.columns(2)
+            # df_structured is guaranteed to be non-empty here
+            # Filters
+            st.subheader("🔍 Filters")
+            col1, col2, col3 = st.columns(3)
             
             with col1:
-                bedrijf_search = st.text_input("Search in Company Info (Bedrijf)")
+                company_filter = st.text_input("🏢 Company Name")
+
             with col2:
-                solliciteren_search = st.text_input("Search in Application Info (Solliciteren)")
+                location_options = ["All"] + sorted(df_structured['location'].dropna().unique().tolist())
+                location_filter = st.selectbox("📍 Location", location_options)
+
+            with col3:
+                st.write("**Data Availability:**")
+                has_email = st.checkbox("Has Email")
+                has_phone = st.checkbox("Has Phone")
+                has_contact = st.checkbox("Has Contact Person")
             
             # Apply filters
-            filtered_raw = df_raw.copy()
+            filtered_df = df_structured.copy()
             
-            if bedrijf_search:
-                filtered_raw = filtered_raw[
-                    filtered_raw['bedrijf'].str.contains(bedrijf_search, case=False, na=False)
+            if company_filter:
+                filtered_df = filtered_df[
+                    filtered_df['company_name'].str.contains(company_filter, case=False, na=False)
                 ]
             
-            if solliciteren_search:
-                filtered_raw = filtered_raw[
-                    filtered_raw['solliciteren'].str.contains(solliciteren_search, case=False, na=False)
-                ]
+            if location_filter != "All":
+                filtered_df = filtered_df[filtered_df['location'] == location_filter]
             
-            # Display options
-            show_full_text = st.checkbox("Show full text content")
+            if has_email:
+                filtered_df = filtered_df[filtered_df['email_addresses'].str.len() > 0]
             
-            # Display data
-            if len(filtered_raw) != len(df_raw):
-                st.info(f"📋 Showing {len(filtered_raw)} of {len(df_raw)} jobs (filtered)")
+            if has_phone:
+                filtered_df = filtered_df[filtered_df['phone_numbers'].str.len() > 0]
             
-            if not show_full_text:
-                # Truncated view
-                display_df = filtered_raw.copy()
-                display_df['bedrijf'] = display_df['bedrijf'].str[:200] + "..."
-                display_df['solliciteren'] = display_df['solliciteren'].str[:200] + "..."
-                st.dataframe(display_df, use_container_width=True)
+            if has_contact:
+                filtered_df = filtered_df[filtered_df['contact_person'].notna()]
+
+            # Display results
+            st.info(f"📋 Showing {len(filtered_df)} of {len(df_structured)} jobs")
+
+            # Select columns to display
+            display_columns = ['company_name', 'location', 'contact_person', 'email_addresses', 'phone_numbers', 'address']
+
+            if not filtered_df.empty:
+                st.dataframe(
+                    filtered_df[display_columns],
+                    use_container_width=True,
+                    column_config={
+                        "company_name": st.column_config.TextColumn("Company", width="medium"),
+                        "location": st.column_config.TextColumn("Location", width="small"),
+                        "contact_person": st.column_config.TextColumn("Contact", width="medium"),
+                        "email_addresses": st.column_config.TextColumn("Email", width="medium"),
+                        "phone_numbers": st.column_config.TextColumn("Phone", width="small"),
+                        "address": st.column_config.TextColumn("Address", width="large"),
+                    }
+                )
             else:
-                # Full view
-                st.dataframe(filtered_raw, use_container_width=True)
-        else:
-            st.warning("No raw data available")
-    
-    # Job Details Tab
-    details_tab = tab4 if df_structured is not None else tab2
-    with details_tab:
-        st.header("🔍 Detailed Job View")
-        
-        if df_raw is not None and not df_raw.empty:
-            # Job selector
-            job_urls = df_raw['url'].tolist()
-            selected_idx = st.selectbox(
-                "Select a job to view details:",
-                range(len(job_urls)),
-                format_func=lambda x: f"Job {x+1}: {job_urls[x].split('/')[-1]}"
-            )
+                st.warning("No jobs match the selected filters")
+
+    # Raw Data Tab - Only if it was created
+    if raw_data_tab:
+        with raw_data_tab:
+            st.header("📋 Raw Scraped Data")
             
-            if selected_idx is not None:
-                selected_job = df_raw.iloc[selected_idx]
-                
-                # Job header
-                st.markdown(f"### Job Details")
-                st.markdown(f"**🔗 URL:** [{selected_job['url']}]({selected_job['url']})")
-                
-                # Show AI-extracted info if available
-                if df_structured is not None:
-                    structured_job = df_structured[df_structured['url'] == selected_job['url']]
-                    if not structured_job.empty:
-                        job_info = structured_job.iloc[0]
-                        
-                        st.markdown("#### 🤖 AI-Extracted Information")
-                        col1, col2 = st.columns(2)
-                        
-                        with col1:
-                            st.write(f"**🏢 Company:** {job_info.get('company_name', 'N/A')}")
-                            st.write(f"**📍 Location:** {job_info.get('location', 'N/A')}")
-                            st.write(f"**👤 Contact:** {job_info.get('contact_person', 'N/A')}")
-                        
-                        with col2:
-                            st.write(f"**📧 Email:** {job_info.get('email_addresses', 'N/A')}")
-                            st.write(f"**📞 Phone:** {job_info.get('phone_numbers', 'N/A')}")
-                            st.write(f"**🏠 Address:** {job_info.get('address', 'N/A')}")
-                        
-                        st.markdown("---")
-                
-                # Original scraped content
+            if df_raw is not None and not df_raw.empty:
+                # Basic filters for raw data
+                st.subheader("🔍 Search")
                 col1, col2 = st.columns(2)
                 
                 with col1:
-                    st.markdown("#### 🏢 Company Info (Bedrijf)")
-                    if selected_job['bedrijf']:
-                        st.text_area("", selected_job['bedrijf'], height=300, key="bedrijf")
-                    else:
-                        st.write("*No company information available*")
-                
+                    bedrijf_search = st.text_input("Search in Company Info (Bedrijf)")
                 with col2:
-                    st.markdown("#### 📧 Application Info (Solliciteren)")
-                    if selected_job['solliciteren']:
-                        st.text_area("", selected_job['solliciteren'], height=300, key="solliciteren")
-                    else:
-                        st.write("*No application information available*")
-        else:
-            st.warning("No job data available")
-    
-    # Export Tab
-    export_tab = tab5 if df_structured is not None else tab3
-    with export_tab:
-        st.header("📥 Export Data")
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.subheader("Raw Data Export")
-            if df_raw is not None and not df_raw.empty:
-                create_download_link(df_raw, "jobontop_raw_data", "📥 Download Raw Data CSV")
-                st.write(f"📊 Total jobs: {len(df_raw)}")
+                    solliciteren_search = st.text_input("Search in Application Info (Solliciteren)")
+                
+                # Apply filters
+                filtered_raw = df_raw.copy()
+                
+                if bedrijf_search:
+                    filtered_raw = filtered_raw[
+                        filtered_raw['bedrijf'].str.contains(bedrijf_search, case=False, na=False)
+                    ]
+                
+                if solliciteren_search:
+                    filtered_raw = filtered_raw[
+                        filtered_raw['solliciteren'].str.contains(solliciteren_search, case=False, na=False)
+                    ]
+                
+                # Display options
+                show_full_text = st.checkbox("Show full text content")
+
+                # Display data
+                if len(filtered_raw) != len(df_raw):
+                    st.info(f"📋 Showing {len(filtered_raw)} of {len(df_raw)} jobs (filtered)")
+
+                if not show_full_text:
+                    # Truncated view
+                    display_df = filtered_raw.copy()
+                    display_df['bedrijf'] = display_df['bedrijf'].str[:200] + "..."
+                    display_df['solliciteren'] = display_df['solliciteren'].str[:200] + "..."
+                    st.dataframe(display_df, use_container_width=True)
+                else:
+                    # Full view
+                    st.dataframe(filtered_raw, use_container_width=True)
             else:
-                st.warning("No raw data available for export")
-        
-        with col2:
-            if df_structured is not None:
-                st.subheader("Structured Data Export")
-                if not df_structured.empty:
+                st.warning("No raw data available")
+
+    # Job Details Tab - Only if it was created
+    if job_details_tab:
+        with job_details_tab:
+            st.header("🔍 Detailed Job View")
+
+            if df_raw is not None and not df_raw.empty:
+                # Job selector
+                job_urls = df_raw['url'].tolist()
+                selected_idx = st.selectbox(
+                    "Select a job to view details:",
+                    range(len(job_urls)),
+                    format_func=lambda x: f"Job {x+1}: {job_urls[x].split('/')[-1]}"
+                )
+
+                if selected_idx is not None:
+                    selected_job = df_raw.iloc[selected_idx]
+
+                    # Job header
+                    st.markdown(f"### Job Details")
+                    st.markdown(f"**🔗 URL:** [{selected_job['url']}]({selected_job['url']})")
+
+                    # Show AI-extracted info if available
+                    if df_structured is not None and not df_structured.empty: # Check df_structured here
+                        structured_job_series = df_structured[df_structured['url'] == selected_job['url']]
+                        if not structured_job_series.empty:
+                            job_info = structured_job_series.iloc[0]
+
+                            st.markdown("#### 🤖 AI-Extracted Information")
+                            col1, col2 = st.columns(2)
+
+                            with col1:
+                                st.write(f"**🏢 Company:** {job_info.get('company_name', 'N/A')}")
+                                st.write(f"**📍 Location:** {job_info.get('location', 'N/A')}")
+                                st.write(f"**👤 Contact:** {job_info.get('contact_person', 'N/A')}")
+
+                            with col2:
+                                st.write(f"**📧 Email:** {job_info.get('email_addresses', 'N/A')}")
+                                st.write(f"**📞 Phone:** {job_info.get('phone_numbers', 'N/A')}")
+                                st.write(f"**🏠 Address:** {job_info.get('address', 'N/A')}")
+
+                            st.markdown("---")
+
+                    # Original scraped content
+                    col1, col2 = st.columns(2)
+
+                    with col1:
+                        st.markdown("#### 🏢 Company Info (Bedrijf)")
+                        if selected_job['bedrijf']:
+                            st.text_area("", selected_job['bedrijf'], height=300, key="bedrijf")
+                        else:
+                            st.write("*No company information available*")
+
+                    with col2:
+                        st.markdown("#### 📧 Application Info (Solliciteren)")
+                        if selected_job['solliciteren']:
+                            st.text_area("", selected_job['solliciteren'], height=300, key="solliciteren")
+                        else:
+                            st.write("*No application information available*")
+            else:
+                st.warning("No job data available")
+
+    # Export Tab - Only if it was created
+    if export_data_tab:
+        with export_data_tab:
+            st.header("📥 Export Data")
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+                st.subheader("Raw Data Export")
+                if df_raw is not None and not df_raw.empty:
+                    create_download_link(df_raw, "jobontop_raw_data", "📥 Download Raw Data CSV")
+                    st.write(f"📊 Total jobs: {len(df_raw)}")
+                else:
+                    st.warning("No raw data available for export")
+
+            with col2:
+                # Check df_structured specifically for this section
+                if df_structured is not None and not df_structured.empty:
+                    st.subheader("Structured Data Export")
                     create_download_link(df_structured, "jobontop_structured_data", "📥 Download Structured Data CSV")
                     st.write(f"📊 Total jobs: {len(df_structured)}")
                 else:
-                    st.warning("No structured data available for export")
+                    st.info("No structured data available for export (run AI extraction if needed)")
             else:
                 st.info("Run AI extraction to enable structured data export")
         
