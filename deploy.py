@@ -22,7 +22,7 @@ def check_dependencies():
             missing_packages.append(package)
     
     if missing_packages:
-        print(f"⚠️  Missing packages: {", ".join(missing_packages)}")
+        print(f"⚠️  Missing packages: {', '.join(missing_packages)}")
         print("Installing missing packages...")
         for package in missing_packages:
             subprocess.run([sys.executable, "-m", "pip", "install", package])
