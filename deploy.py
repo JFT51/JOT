@@ -204,13 +204,15 @@ def main():
             print("❌ AI extraction failed, aborting")
             return
         
-        # Step 3: Create viewer (only if not in GitHub Actions)
-        if not sys.stdin.isatty() or os.environ.get("GITHUB_ACTIONS") == "true":
-            print("Skipping HTML viewer creation in automated run.")
-        else:
-            html_file = create_simple_viewer(structured_file)
-            if html_file:
+        # Step 3: Create viewer
+        html_file = create_simple_viewer(structured_file)
+        if html_file:
+            # Attempt to launch viewer, but don't fail if it doesn't work in sandbox
+            try:
                 launch_viewer(html_file)
+            except Exception as e:
+                print(f"Note: Could not auto-launch viewer in this environment: {e}")
+                print(f"HTML viewer created at: {html_file}")
         
     elif choice == "2":
         # AI extraction on existing data
@@ -228,12 +230,14 @@ def main():
         
         structured_file = run_ai_extraction(scraped_file)
         if structured_file:
-            if not sys.stdin.isatty() or os.environ.get("GITHUB_ACTIONS") == "true":
-                print("Skipping HTML viewer creation in automated run.")
-            else:
-                html_file = create_simple_viewer(structured_file)
-                if html_file:
+            html_file = create_simple_viewer(structured_file)
+            if html_file:
+                # Attempt to launch viewer, but don't fail if it doesn't work in sandbox
+                try:
                     launch_viewer(html_file)
+                except Exception as e:
+                    print(f"Note: Could not auto-launch viewer in this environment: {e}")
+                    print(f"HTML viewer created at: {html_file}")
     
     elif choice == "3":
         # Just launch existing viewer
