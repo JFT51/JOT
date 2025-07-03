@@ -1,1 +1,41 @@
+name: Scheduled Data Scrape and Update
+
+on:
+  schedule:
+    # Runs every day at 00:00 UTC
+    # You can adjust the cron schedule as needed.
+    # For example, '0 */6 * * *' would run every 6 hours.
+    # Learn more about cron syntax: https://crontab.guru/
+    - cron: '0 0 * * *'
+  workflow_dispatch: # Allows you to manually trigger the workflow from GitHub Actions tab
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        # This token is required to push changes back to the repository
+        # It will be set up in the next step (PAT guidance )
+        token: ${{ secrets.GH_PAT }}
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10' # Ensure this matches your deploy.py environment
+
+    - name: Install dependencies
+      run: pip install -r requirements.txt
+
+    - name: Run data scraping script
+      run: python deploy.py
+
+    - name: Commit and push changes
+      run: |
+        git config user.name github-actions[bot]
+        git config user.email github-actions[bot]@users.noreply.github.com
+        git add .
+        git diff-index --quiet HEAD || git commit -m 
 
