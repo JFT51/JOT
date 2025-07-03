@@ -12,7 +12,7 @@ from pathlib import Path
 
 def check_dependencies():
     """Check if required packages are installed"""
-    required_packages = ['requests', 'beautifulsoup4', 'pandas', 'streamlit', 'plotly']
+    required_packages = ["requests", "beautifulsoup4", "pandas", "streamlit", "plotly"]
     missing_packages = []
     
     for package in required_packages:
@@ -22,10 +22,10 @@ def check_dependencies():
             missing_packages.append(package)
     
     if missing_packages:
-        print(f"⚠️  Missing packages: {', '.join(missing_packages)}")
+        print(f"⚠️  Missing packages: {", ".join(missing_packages)}")
         print("Installing missing packages...")
         for package in missing_packages:
-            subprocess.run([sys.executable, '-m', 'pip', 'install', package])
+            subprocess.run([sys.executable, "-m", "pip", "install", package])
     else:
         print("✅ All dependencies are installed")
 
@@ -42,8 +42,8 @@ def run_scraper():
             import pandas as pd
             df = pd.DataFrame(job_data)
             timestamp = int(time.time())
-            filename = f'job_scraping_results_{timestamp}.csv'
-            df.to_csv(filename, index=False, encoding='utf-8')
+            filename = f"job_scraping_results_{timestamp}.csv"
+            df.to_csv(filename, index=False, encoding="utf-8")
             print(f"✅ Scraped {len(job_data)} jobs and saved to {filename}")
             return filename
         else:
@@ -69,19 +69,19 @@ def run_ai_extraction(input_file):
         
         # Save structured data
         timestamp = int(time.time())
-        output_file = f'job_data_structured_{timestamp}.csv'
-        structured_df.to_csv(output_file, index=False, encoding='utf-8')
+        output_file = f"job_data_structured_{timestamp}.csv"
+        structured_df.to_csv(output_file, index=False, encoding="utf-8")
         
         print(f"✅ AI extraction completed and saved to {output_file}")
         
         # Display summary
         print("\n=== EXTRACTION SUMMARY ===")
-        print(f"Company names extracted: {structured_df['company_name'].notna().sum()}")
-        print(f"Locations extracted: {structured_df['location'].notna().sum()}")
-        print(f"Contact persons extracted: {structured_df['contact_person'].notna().sum()}")
-        print(f"Email addresses extracted: {(structured_df['email_addresses'] != '').sum()}")
-        print(f"Phone numbers extracted: {(structured_df['phone_numbers'] != '').sum()}")
-        print(f"Addresses extracted: {structured_df['address'].notna().sum()}")
+        print(f"Company names extracted: {structured_df["company_name"].notna().sum()}")
+        print(f"Locations extracted: {structured_df["location"].notna().sum()}")
+        print(f"Contact persons extracted: {structured_df["contact_person"].notna().sum()}")
+        print(f"Email addresses extracted: {(structured_df["email_addresses"] != "").sum()}")
+        print(f"Phone numbers extracted: {(structured_df["phone_numbers"] != "").sum()}")
+        print(f"Addresses extracted: {structured_df["address"].notna().sum()}")
         
         return output_file
         
@@ -102,13 +102,13 @@ def create_simple_viewer(structured_file):
         jobs_data = []
         for _, row in df.iterrows():
             job = {
-                'company_name': str(row.get('company_name', '')),
-                'location': str(row.get('location', '')),
-                'contact_person': str(row.get('contact_person', '')),
-                'email_addresses': str(row.get('email_addresses', '')),
-                'phone_numbers': str(row.get('phone_numbers', '')),
-                'address': str(row.get('address', '')),
-                'url': str(row.get('url', ''))
+                "company_name": str(row.get("company_name", "")),
+                "location": str(row.get("location", "")),
+                "contact_person": str(row.get("contact_person", "")),
+                "email_addresses": str(row.get("email_addresses", "")),
+                "phone_numbers": str(row.get("phone_numbers", "")),
+                "address": str(row.get("address", "")),
+                "url": str(row.get("url", ""))
             }
             jobs_data.append(job)
         
@@ -118,15 +118,15 @@ def create_simple_viewer(structured_file):
             js_data += "    {\n"
             for key, value in job.items():
                 # Escape quotes in values
-                escaped_value = value.replace('"', '\\"').replace('\n', '\\n')
-                js_data += f'        {key}: "{escaped_value}",\n'
+                escaped_value = value.replace("\"", "\\\"").replace("\n", "\\n")
+                js_data += f"        {key}: \"{escaped_value}\",\n"
             js_data += "    },\n"
         js_data += "];\n"
         
         # Read the HTML template and replace the data
-        html_file = 'job_results.html'
+        html_file = "job_results.html"
         if os.path.exists(html_file):
-            with open(html_file, 'r', encoding='utf-8') as f:
+            with open(html_file, "r", encoding="utf-8") as f:
                 html_content = f.read()
             
             # Replace the sample data with actual data
@@ -140,8 +140,8 @@ def create_simple_viewer(structured_file):
                 
                 # Save updated HTML
                 timestamp = int(time.time())
-                new_html_file = f'job_results_live_{timestamp}.html'
-                with open(new_html_file, 'w', encoding='utf-8') as f:
+                new_html_file = f"job_results_live_{timestamp}.html"
+                with open(new_html_file, "w", encoding="utf-8") as f:
                     f.write(new_html)
                 
                 print(f"✅ Live HTML viewer created: {new_html_file}")
@@ -158,10 +158,10 @@ def launch_viewer(html_file):
     """Launch the HTML viewer"""
     print(f"🚀 Launching viewer: {html_file}")
     try:
-        if os.name == 'nt':  # Windows
+        if os.name == "nt":  # Windows
             os.startfile(html_file)
         else:  # Mac/Linux
-            subprocess.run(['open', html_file])
+            subprocess.run(["open", html_file])
         print("✅ Viewer launched in browser")
     except Exception as e:
         print(f"❌ Could not launch viewer: {e}")
@@ -175,13 +175,18 @@ def main():
     # Check dependencies
     check_dependencies()
     
-    # Ask user what to do
-    print("\nChoose an option:")
-    print("1. Run full scraping + AI extraction + launch viewer")
-    print("2. Run AI extraction on existing data + launch viewer")
-    print("3. Just launch HTML viewer")
-    
-    choice = input("\nEnter your choice (1-3): ").strip()
+    # Check if running in a non-interactive environment (e.g., GitHub Actions)
+    # or if a specific environment variable is set for automation
+    if not sys.stdin.isatty() or os.environ.get("GITHUB_ACTIONS") == "true":
+        choice = "1" # Automatically select option 1 for automation
+        print("Automatically selected option 1 for automated run.")
+    else:
+        # Ask user what to do
+        print("\nChoose an option:")
+        print("1. Run full scraping + AI extraction + launch viewer")
+        print("2. Run AI extraction on existing data + launch viewer")
+        print("3. Just launch HTML viewer")
+        choice = input("\nEnter your choice (1-3): ").strip()
     
     if choice == "1":
         # Full workflow
@@ -199,17 +204,20 @@ def main():
             print("❌ AI extraction failed, aborting")
             return
         
-        # Step 3: Create viewer
-        html_file = create_simple_viewer(structured_file)
-        if html_file:
-            launch_viewer(html_file)
+        # Step 3: Create viewer (only if not in GitHub Actions)
+        if not sys.stdin.isatty() or os.environ.get("GITHUB_ACTIONS") == "true":
+            print("Skipping HTML viewer creation in automated run.")
+        else:
+            html_file = create_simple_viewer(structured_file)
+            if html_file:
+                launch_viewer(html_file)
         
     elif choice == "2":
         # AI extraction on existing data
         print("\n🤖 Running AI extraction on existing data...")
         
         # Look for existing scraped data
-        scraped_files = [f for f in os.listdir('.') if f.startswith('job_scraping_results') and f.endswith('.csv')]
+        scraped_files = [f for f in os.listdir(".") if f.startswith("job_scraping_results") and f.endswith(".csv")]
         if not scraped_files:
             print("❌ No scraped data found. Run option 1 first.")
             return
@@ -220,16 +228,19 @@ def main():
         
         structured_file = run_ai_extraction(scraped_file)
         if structured_file:
-            html_file = create_simple_viewer(structured_file)
-            if html_file:
-                launch_viewer(html_file)
+            if not sys.stdin.isatty() or os.environ.get("GITHUB_ACTIONS") == "true":
+                print("Skipping HTML viewer creation in automated run.")
+            else:
+                html_file = create_simple_viewer(structured_file)
+                if html_file:
+                    launch_viewer(html_file)
     
     elif choice == "3":
         # Just launch existing viewer
         print("\n📄 Launching existing HTML viewer...")
         
         # Look for HTML files
-        html_files = [f for f in os.listdir('.') if f.startswith('job_results') and f.endswith('.html')]
+        html_files = [f for f in os.listdir(".") if f.startswith("job_results") and f.endswith(".html")]
         if html_files:
             # Use the most recent
             html_file = max(html_files, key=os.path.getctime)
